@@ -22,6 +22,18 @@ export default declare(api => {
       }
     }
 
+    function slice(start = 0, end = object.length, step = 1) {
+      const a = [];
+
+      for (let index = start; index < end; index += step) {
+        if (object[index]) {
+          a.push(object[index]);
+        }
+      }
+
+      return a;
+    }
+
     visitor: {
       memberExpression(path) {
         const { node, scope } = path;
@@ -29,7 +41,6 @@ export default declare(api => {
         if (computed !== true && !hasLengthProperty(object)) {
           return;
         }
-
       },
     },
   };
