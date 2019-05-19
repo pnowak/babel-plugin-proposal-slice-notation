@@ -25,13 +25,21 @@ export default declare(api => {
     function slice(start = 0, end = object.length, step = 1) {
       const a = [];
 
+      if (!(~Math.sign(start))) {
+        start = Math.max((start + object.length), 0);
+      }
+
+      if (!(~Math.sign(end))) {
+        end = Math.max((end + object.length), 0);
+      }
+
       for (let index = start; index < end; index += step) {
         if (object[index]) {
           a.push(object[index]);
         }
       }
 
-      return a;
+      return typeof object === 'string' ? a.join('') : a;
     }
 
     visitor: {
