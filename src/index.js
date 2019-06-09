@@ -46,20 +46,49 @@ export default declare(api => {
         const DEFAULT_START = 0;
         const DEFAULT_END = object.length;
         const DEFAULT_STEP = 1;
+        let start;
+        let end;
+        let step;
 
         if (t.numericLiteral(property)) {
-          const start = property.value || DEFAULT_START;
-          const end = DEFAULT_END;
-          const step = DEFAULT_STEP;
+          start = property.value || DEFAULT_START;
+          end = DEFAULT_END;
+          step = DEFAULT_STEP;
 
-        }
+        } else if (t.sequenceExpression(property)) {
+          const firstExpression = property[0];
+          const secondExpression = property[1];
+          const thirdExpression = property[2];
 
-        if (!(~Math.sign(start))) {
-          start = Math.max((start + object.length), 0);
-        }
+          if (t.numericLiteral(firstExpression)) {
+            start = firstExpression.value;
 
-        if (!(~Math.sign(end))) {
-          end = Math.max((end + object.length), 0);
+          } else if (t.unaryExpression(firstExpression) && t.isUnaryExpression({ operator: "-" })) {
+            start = Math.max((firstExpression.argument.value + DEFAULT_END), 0);
+
+          } else {
+            start = DEFAULT_END;
+          }
+
+          if (t.numericLiteral(secondExpression)) {
+            end = secondExpression.value;
+
+          } else if (t.unaryExpression(secondExpression) && t.isUnaryExpression({ operator: "-" })) {
+            end = Math.max((secondExpression.argument.value + DEFAULT_END), 0);
+
+          } else {
+            end = DEFAULT_STEP;
+          }
+
+          if (t.numericLiteral(thirdExpression)) {
+            step = secondExpression.value;
+
+          } else if (t.unaryExpression(secondExpression) && t.isUnaryExpression({ operator: "-" })) {
+            //HOW TRAVERSE OBJECT IN REVERSE
+
+          } else {
+            step = DEFAULT_START;
+          }
         }
 
         path.replaceWith(
