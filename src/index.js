@@ -43,10 +43,14 @@ export default declare(api => {
           return;
         }
 
+        const DEFAULT_START = 0;
+        const DEFAULT_END = object.length;
+        const DEFAULT_STEP = 1;
+
         if (t.numericLiteral(property)) {
-          const start = property.value;
-          const end = object.length;
-          const step = 1;
+          const start = property.value || DEFAULT_START;
+          const end = DEFAULT_END;
+          const step = DEFAULT_STEP;
 
         }
 
