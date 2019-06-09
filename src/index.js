@@ -21,14 +21,6 @@ export default declare(api => {
   function slice(start = 0, end = object.length, step = 1) {
     const a = [];
 
-    if (!(~Math.sign(start))) {
-      start = Math.max((start + object.length), 0);
-    }
-
-    if (!(~Math.sign(end))) {
-      end = Math.max((end + object.length), 0);
-    }
-
     for (let index = start; index < end; index += step) {
       if (object[index]) {
         a.push(object[index]);
@@ -45,22 +37,36 @@ export default declare(api => {
     visitor: {
       memberExpression(path) {
         const { node, scope } = path;
-        const { object, property, computed, optional } = node;
-         // && t.numericLiteral(start) && t.numericLiteral(end) && t.numericLiteral(step)
+        const { object, property, computed } = node;
 
         if (computed !== true && !hasLengthProperty(object)) {
           return;
         }
 
+        if (t.numericLiteral(property)) {
+          const start = property.value;
+          const end = object.length;
+          const step = 1;
+
+        }
+
+        if (!(~Math.sign(start))) {
+          start = Math.max((start + object.length), 0);
+        }
+
+        if (!(~Math.sign(end))) {
+          end = Math.max((end + object.length), 0);
+        }
+
         path.replaceWith(
           t.forStatement(
-            t.variableDeclaration("let", inits),
+            t.variableDeclaration("let", start),
             t.binaryExpression(
               "<",
-              t.cloneNode(i),
-              t.memberExpression(t.cloneNode(array), t.identifier("length")),
+              t.cloneNode(start),
+              t.memberExpression(t.cloneNode(object), t.identifier("length")),
             ),
-            t.updateExpression("++", t.cloneNode(i)),
+            t.updateExpression("++", t.cloneNode(step)),
             block,
           ),
         );
