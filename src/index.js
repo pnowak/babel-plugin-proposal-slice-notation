@@ -64,10 +64,10 @@ export default declare(api => {
             start = firstExpression.value;
 
           } else if (t.unaryExpression(firstExpression) && t.isUnaryExpression({ operator: "-" })) {
-            start = Math.max((firstExpression.argument.value + DEFAULT_END), 0);
+            start = Math.max((firstExpression.argument.value + DEFAULT_START), 0);
 
           } else {
-            start = DEFAULT_END;
+            start = DEFAULT_START;
           }
 
           if (t.numericLiteral(secondExpression)) {
@@ -77,17 +77,17 @@ export default declare(api => {
             end = Math.max((secondExpression.argument.value + DEFAULT_END), 0);
 
           } else {
-            end = DEFAULT_STEP;
+            end = DEFAULT_END;
           }
 
           if (t.numericLiteral(thirdExpression)) {
             step = secondExpression.value;
 
           } else if (t.unaryExpression(secondExpression) && t.isUnaryExpression({ operator: "-" })) {
-            //HOW TRAVERSE OBJECT IN REVERSE
+            //HOW TRAVERSE OBJECT IN REVERSE??
 
           } else {
-            step = DEFAULT_START;
+            step = DEFAULT_STEP;
           }
         }
 
@@ -97,7 +97,7 @@ export default declare(api => {
             t.binaryExpression(
               "<",
               t.cloneNode(start),
-              t.memberExpression(t.cloneNode(object), t.identifier("length")),
+              t.cloneNode(end),
             ),
             t.updateExpression("++", t.cloneNode(step)),
             block,
