@@ -18,6 +18,19 @@ export default declare(api => {
     }
   }
 
+  function setValue(expression, bound, defaultValue) {
+    if (t.numericLiteral(expression)) {
+      bound = expression.value;
+
+    } else if (t.unaryExpression(expression) && t.isUnaryExpression({ operator: "-" })) {
+      bound = Math.max((expression.argument.value + defaultValue), 0);
+      //HOW TRAVERSE OBJECT IN REVERSE IF `STEP` IS NEGATIVE NUMBER?
+
+    } else {
+      bound = defaultValue;
+    }
+  }
+
   function slice(start = 0, end = object.length, step = 1) {
     const a = [];
 
@@ -60,35 +73,9 @@ export default declare(api => {
           const secondExpression = property[1];
           const thirdExpression = property[2];
 
-          if (t.numericLiteral(firstExpression)) {
-            start = firstExpression.value;
-
-          } else if (t.unaryExpression(firstExpression) && t.isUnaryExpression({ operator: "-" })) {
-            start = Math.max((firstExpression.argument.value + DEFAULT_START), 0);
-
-          } else {
-            start = DEFAULT_START;
-          }
-
-          if (t.numericLiteral(secondExpression)) {
-            end = secondExpression.value;
-
-          } else if (t.unaryExpression(secondExpression) && t.isUnaryExpression({ operator: "-" })) {
-            end = Math.max((secondExpression.argument.value + DEFAULT_END), 0);
-
-          } else {
-            end = DEFAULT_END;
-          }
-
-          if (t.numericLiteral(thirdExpression)) {
-            step = secondExpression.value;
-
-          } else if (t.unaryExpression(secondExpression) && t.isUnaryExpression({ operator: "-" })) {
-            //HOW TRAVERSE OBJECT IN REVERSE??
-
-          } else {
-            step = DEFAULT_STEP;
-          }
+          setValue(firstExpression, start, DEFAULT_START);
+          setValue(secondExpression, end, DEFAULT_END);
+          setValue(thirdExpression, step, DEFAULT_STEP);
         }
 
         path.replaceWith(
