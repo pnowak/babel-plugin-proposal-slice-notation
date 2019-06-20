@@ -5,7 +5,7 @@ import { types as t } from "@babel/core";
 export default declare(api => {
   api.assertVersion(7);
 
-  function hasLengthProperty(object) {
+  const hasLengthProperty = object => {
     if (typeof object === 'string') {
       object = Object(object);
     }
@@ -18,30 +18,93 @@ export default declare(api => {
     }
   }
 
-  function setValue(expression, bound, defaultValue) {
+  const setValue = (expression, bound, defaultValue) => {
     if (t.numericLiteral(expression)) {
       bound = expression.value;
 
     } else if (t.unaryExpression(expression) && t.isUnaryExpression({ operator: "-" })) {
-      bound = Math.max((expression.argument.value + defaultValue), 0);
-      //HOW TRAVERSE OBJECT IN REVERSE IF `STEP` IS NEGATIVE NUMBER?
+      if (expression !== thirdExpression) {
+        bound = Math.max((expression.argument.value + defaultValue), 0);
+
+      } else {
+        //HOW TRAVERSE OBJECT IN REVERSE IF `STEP` IS NEGATIVE NUMBER?
+      }
 
     } else {
       bound = defaultValue;
     }
   }
 
-  function slice(start = 0, end = object.length, step = 1) {
-    const a = [];
-
-    for (let index = start; index < end; index += step) {
-      if (object[index]) {
-        a.push(object[index]);
-      }
-    }
-
-    return typeof object === 'string' ? a.join('') : a;
-  }
+  const slice = t.functionExpression(
+    null,
+    [t.identifier("start"), t.identifier("end"), t.identifier("step")],
+    t.blockStatement([
+      t.variableDeclaration("const", [
+        t.assignmentExpression(
+          "=",
+          t.identifier("a"),
+          t.arrayExpression([]),
+        ),
+      ]),
+      t.forStatement(
+        t.variableDeclaration("let", [
+          t.assignmentExpression(
+            "=",
+            t.identifier("index"),
+            t.identifier("start"),
+          ),
+        ]),
+        t.binaryExpression(
+          "<",
+          t.identifier("index"),
+          t.identifier("end"),
+        ),
+        t.assignmentExpression("+=", t.identifier("index"), t.identifier("step")),
+        t.ifStatement(
+          t.memberExpression(
+            t.identifier("object"),
+            t.identifier("index"),
+            true
+          ),
+          t.blockStatement([
+            t.expressionStatement(
+              t.callExpression(
+                t.memberExpression(
+                  t.identifier("a"),
+                  t.identifier("push")
+                ),
+                [t.memberExpression(
+                  t.identifier("object"),
+                  t.identifier("index"),
+                  true
+                )]
+              ),
+            ),
+          ]),
+        ),
+      ),
+      t.returnStatement(
+        t.conditionalExpression(
+          t.binaryExpression(
+            "===",
+            t.unaryExpression(
+              "typeof",
+              t.identifier("object"),
+            ),
+            t.stringLiteral("string")
+          ),
+          t.callExpression(
+            t.memberExpression(
+              t.identifier("a"),
+              t.identifier("join")
+            ),
+            [t.stringLiteral("")]
+          ),
+          t.identifier("a"),
+        )
+      )
+    ]),
+  );
 
   return {
     name: "proposal-slice-notation",
@@ -79,16 +142,7 @@ export default declare(api => {
         }
 
         path.replaceWith(
-          t.forStatement(
-            t.variableDeclaration("let", start),
-            t.binaryExpression(
-              "<",
-              t.cloneNode(start),
-              t.cloneNode(end),
-            ),
-            t.updateExpression("++", t.cloneNode(step)),
-            block,
-          ),
+          t.callExpression(slice, [start, end, step])
         );
       },
     },
