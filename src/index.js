@@ -59,7 +59,11 @@ export default declare(api => {
           t.identifier("index"),
           t.identifier("end"),
         ),
-        t.assignmentExpression("+=", t.identifier("index"), t.identifier("step")),
+        t.assignmentExpression(
+          "+=",
+          t.identifier("index"),
+          t.identifier("step")
+        ),
         t.ifStatement(
           t.memberExpression(
             t.identifier("object"),
@@ -142,7 +146,11 @@ export default declare(api => {
         }
 
         path.replaceWith(
-          t.callExpression(slice, [start, end, step])
+          t.callExpression(slice, [
+            t.numericLiteral(start),
+            t.numericLiteral(end),
+            t.numericLiteral(step)
+          ])
         );
       },
     },
