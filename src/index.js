@@ -1,6 +1,6 @@
 import { declare } from "@babel/helper-plugin-utils";
 import syntaxSliceNotation from "@babel/plugin-syntax-slice-notation";
-import { types as t } from "@babel/core";
+import { template, types as t } from "@babel/core";
 
 export default declare(api => {
   api.assertVersion(7);
@@ -19,15 +19,16 @@ export default declare(api => {
   }
 
   const setValue = (expression, bound, defaultValue) => {
-    if (t.numericLiteral(expression)) {
+    if (t.isNumericLiteral(expression)) {
       bound = expression.value;
 
-    } else if (t.unaryExpression(expression) && t.isUnaryExpression({ operator: "-" })) {
+    } else if (t.isUnaryExpression(expression) && t.isUnaryExpression({ operator: "-" })) {
       if (expression !== thirdExpression) {
         bound = Math.max((expression.argument.value + defaultValue), 0);
 
       } else {
-        //HOW TRAVERSE OBJECT IN REVERSE IF `STEP` IS NEGATIVE NUMBER?
+        isNegativeStep = true;
+        bound = expression.argument.value;
       }
 
     } else {
@@ -35,80 +36,26 @@ export default declare(api => {
     }
   }
 
-  const slice = t.functionExpression(
-    null,
-    [t.identifier("start"), t.identifier("end"), t.identifier("step")],
-    t.blockStatement([
-      t.variableDeclaration("const", [
-        t.assignmentExpression(
-          "=",
-          t.identifier("a"),
-          t.arrayExpression([]),
-        ),
-      ]),
-      t.forStatement(
-        t.variableDeclaration("let", [
-          t.assignmentExpression(
-            "=",
-            t.identifier("index"),
-            t.identifier("start"),
-          ),
-        ]),
-        t.binaryExpression(
-          "<",
-          t.identifier("index"),
-          t.identifier("end"),
-        ),
-        t.assignmentExpression(
-          "+=",
-          t.identifier("index"),
-          t.identifier("step")
-        ),
-        t.ifStatement(
-          t.memberExpression(
-            t.identifier("object"),
-            t.identifier("index"),
-            true
-          ),
-          t.blockStatement([
-            t.expressionStatement(
-              t.callExpression(
-                t.memberExpression(
-                  t.identifier("a"),
-                  t.identifier("push")
-                ),
-                [t.memberExpression(
-                  t.identifier("object"),
-                  t.identifier("index"),
-                  true
-                )]
-              ),
-            ),
-          ]),
-        ),
-      ),
-      t.returnStatement(
-        t.conditionalExpression(
-          t.binaryExpression(
-            "===",
-            t.unaryExpression(
-              "typeof",
-              t.identifier("object"),
-            ),
-            t.stringLiteral("string")
-          ),
-          t.callExpression(
-            t.memberExpression(
-              t.identifier("a"),
-              t.identifier("join")
-            ),
-            [t.stringLiteral("")]
-          ),
-          t.identifier("a"),
-        )
-      )
-    ]),
-  );
+  const buildSliceFunction = template.ast`
+    function slice(start, end, step) {
+      const a = [];
+      let loop;
+
+      if (${isNegativeStep}) {
+        loop = (let index = end; index > start; index -= step);
+      } else {
+        loop = (let index = start; index < end; index += step);
+      }
+
+      for loop {
+        if (arr[index]) {
+          a.push(arr[index]);
+        }
+      }
+
+      return typeof arr === 'string' ? a.join('') : a;
+    }
+  `;
 
   return {
     name: "proposal-slice-notation",
@@ -118,6 +65,7 @@ export default declare(api => {
       memberExpression(path) {
         const { node, scope } = path;
         const { object, property, computed } = node;
+        let isNegativeStep;
 
         if (computed !== true && !hasLengthProperty(object)) {
           return;
@@ -146,7 +94,7 @@ export default declare(api => {
         }
 
         path.replaceWith(
-          t.callExpression(slice, [
+          t.callExpression(buildSliceFunction, [
             t.numericLiteral(start),
             t.numericLiteral(end),
             t.numericLiteral(step)
