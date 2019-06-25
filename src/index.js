@@ -36,18 +36,11 @@ export default declare(api => {
     }
   }
 
-  const buildSliceFunction = template.ast`
+  const buildSliceFunction = template.ast(`
     function slice(start, end, step) {
       const a = [];
-      let loop;
 
-      if (${isNegativeStep}) {
-        loop = (let index = end; index > start; index -= step);
-      } else {
-        loop = (let index = start; index < end; index += step);
-      }
-
-      for loop {
+      for (let index = end; index > start; index -= step) {
         if (arr[index]) {
           a.push(arr[index]);
         }
@@ -55,7 +48,21 @@ export default declare(api => {
 
       return typeof arr === 'string' ? a.join('') : a;
     }
-  `;
+  `);
+
+  const buildSliceFunctionWithNegativeStep = template.ast(`
+    function slice(start, end, step) {
+      const a = [];
+
+      for (let index = start; index < end; index += step) {
+        if (arr[index]) {
+          a.push(arr[index]);
+        }
+      }
+
+      return typeof arr === 'string' ? a.join('') : a;
+    }
+  `);
 
   return {
     name: "proposal-slice-notation",
@@ -94,11 +101,20 @@ export default declare(api => {
         }
 
         path.replaceWith(
-          t.callExpression(buildSliceFunction, [
-            t.numericLiteral(start),
-            t.numericLiteral(end),
-            t.numericLiteral(step)
-          ])
+          if (isNegativeStep) {
+            t.callExpression(buildSliceFunction, [
+              t.numericLiteral(start),
+              t.numericLiteral(end),
+              t.numericLiteral(step)
+            ]);
+          } else {
+            t.callExpression(buildSliceFunctionWithNegativeStep, [
+              t.numericLiteral(start),
+              t.numericLiteral(end),
+              t.numericLiteral(step)
+            ]);
+          }
+
         );
       },
     },
