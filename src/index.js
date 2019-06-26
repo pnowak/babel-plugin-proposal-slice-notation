@@ -40,7 +40,7 @@ export default declare(api => {
     function slice(start, end, step) {
       const a = [];
 
-      for (let index = end; index > start; index -= step) {
+      for (let index = start; index < end; index += step) {
         if (arr[index]) {
           a.push(arr[index]);
         }
@@ -54,7 +54,7 @@ export default declare(api => {
     function slice(start, end, step) {
       const a = [];
 
-      for (let index = start; index < end; index += step) {
+      for (let index = end; index > start; index -= step) {
         if (arr[index]) {
           a.push(arr[index]);
         }
@@ -100,23 +100,25 @@ export default declare(api => {
           setValue(thirdExpression, step, DEFAULT_STEP);
         }
 
-        path.replaceWith(
-          if (isNegativeStep) {
-            t.callExpression(buildSliceFunction, [
-              t.numericLiteral(start),
-              t.numericLiteral(end),
-              t.numericLiteral(step)
-            ]);
-          } else {
+        if (isNegativeStep) {
+          path.replaceWith(
             t.callExpression(buildSliceFunctionWithNegativeStep, [
               t.numericLiteral(start),
               t.numericLiteral(end),
               t.numericLiteral(step)
             ]);
-          }
+          );
 
-        );
-      },
-    },
+        } else {
+          path.replaceWith(
+            t.callExpression(buildSliceFunction, [
+              t.numericLiteral(start),
+              t.numericLiteral(end),
+              t.numericLiteral(step)
+            ]);
+          );
+        }
+      }
+    }
   };
 });
