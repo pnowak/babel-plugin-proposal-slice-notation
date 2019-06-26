@@ -85,12 +85,12 @@ export default declare(api => {
         let end;
         let step;
 
-        if (t.numericLiteral(property)) {
+        if (t.isNumericLiteral(property)) {
           start = property.value || DEFAULT_START;
           end = DEFAULT_END;
           step = DEFAULT_STEP;
 
-        } else if (t.sequenceExpression(property)) {
+        } else if (t.isSequenceExpression(property)) {
           const firstExpression = property[0];
           const secondExpression = property[1];
           const thirdExpression = property[2];
